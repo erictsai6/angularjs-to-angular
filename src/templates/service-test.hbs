@@ -1,0 +1,9 @@
+import { mock, instance, when, verify } from 'ts-mockito';
+
+{{#each imports}}
+import { {{name}} } from '{{path}}';
+{{/each}}
+
+{{#if specs}}
+{{{specs}}}
+{{/if}}

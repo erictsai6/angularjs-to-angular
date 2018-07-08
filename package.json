@@ -4,14 +4,10 @@
   "description": "cli that takes in angularjs files and outputs angular",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js tests/data",
-    "dependencies": "node src/index.js -d 'tests/data/**/*.{js,ts}'",
     "components": "node src/index.js -c 'tests/data/**/*component.{js,ts}'",
     "templates": "node src/index.js -t 'tests/data/**/*.tpl.html'",
     "services": "node src/index.js -s 'tests/data/**/!(*routes|*module|*component|*spec).{js,ts}'",
     "serviceSpecs": "node src/index.js --serviceSpecs 'tests/data/**/*{service,model}.{js,ts}'",
-    "extract": "node src/index.js -e 'tests/data/**/*.tpl.html'",
-    "extract:post": "node src/index.js -e '.tmp/upgrade/**/*.tpl.html'",
     "test": "ava"
   },
   "repository": {

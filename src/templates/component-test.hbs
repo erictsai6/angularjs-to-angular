@@ -1,0 +1,103 @@
+import { NO_ERRORS_SCHEMA, DebugElement, Component } from '@angular/core';
+{{#if importForms}}
+import { FormsModule } from '@angular/forms';
+{{/if}}
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+{{#if mocks}}
+import { mock, instance, when, verify } from 'ts-mockito';
+
+{{#each imports}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+import { {{componentClass}} } from '{{componentPath}}';
+
+@Component({
+    template: `
+    <{{selector}}{{#unless inputs}}></{{selector}}>{{/unless}}
+{{#each inputs}}
+      [{{name}}]="{{name}}"{{#if @last}}>
+    </{{../selector}}>{{/if}}
+{{/each}}
+    `
+})
+class TestHostComponent {
+{{#each inputs}}
+    public {{name}};
+{{/each}}
+{{#if outputs}}
+
+// https://angular.io/guide/testing#test-a-component-inside-a-test-host-component
+{{#each outputs}}
+    // "public {{name}}" output needs to be bound to the template above and tested
+{{/each}}
+{{/if}}
+}
+
+describe('<Unit Test> {{testName}}', () => {
+    let component: {{componentClass}};
+    let fixture: ComponentFixture<TestHostComponent>;
+    let element: DebugElement;
+    {{#each variables}}
+    {{{this}}}
+    {{/each}}
+
+    beforeEach(() => {
+        {{#each assignments}}
+        {{{this}}}
+        {{/each}}
+
+        TestBed.configureTestingModule({
+            declarations: [
+                TestHostComponent, 
+                {{componentClass}} 
+            ],
+            {{#if importForms}}
+            imports: [
+                FormsModule
+            ],
+            {{/if}}
+            {{#if providers}}
+            providers: [
+            {{#each providers}}
+                {{{this}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+            ],
+            {{/if}}
+            schemas: [ NO_ERRORS_SCHEMA ]
+        });
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(TestHostComponent);
+        element = fixture
+            .debugElement
+            .query(By.css('{{selector}}'));
+        component = element.componentInstance;
+        component.ngOnInit();
+        fixture.detectChanges();
+    });
+    {{#if testBedGets}}
+
+    beforeEach(() => {
+        {{#each testBedGets}}
+        {{{this}}}
+        {{/each}}
+    });
+
+    {{/if}}
+    {{#if specs}}
+    {{{specs}}}
+    {{/if}}
+    {{#unless specs}}
+    {{#each methods}}
+    describe('#{{this}}', () => {
+        // Write tests
+    });
+
+    {{/each}}
+    {{/unless}}
+
+});
