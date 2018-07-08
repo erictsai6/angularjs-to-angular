@@ -1,0 +1,53 @@
+{
+  "name": "angularjs-to-angular",
+  "version": "1.0.0",
+  "description": "cli that takes in angularjs files and outputs angular",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js tests/data",
+    "dependencies": "node src/index.js -d 'tests/data/**/*.{js,ts}'",
+    "components": "node src/index.js -c 'tests/data/**/*component.{js,ts}'",
+    "templates": "node src/index.js -t 'tests/data/**/*.tpl.html'",
+    "services": "node src/index.js -s 'tests/data/**/!(*routes|*module|*component|*spec).{js,ts}'",
+    "serviceSpecs": "node src/index.js --serviceSpecs 'tests/data/**/*{service,model}.{js,ts}'",
+    "extract": "node src/index.js -e 'tests/data/**/*.tpl.html'",
+    "extract:post": "node src/index.js -e '.tmp/upgrade/**/*.tpl.html'",
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erictsai6/angularjs-to-angular.git"
+  },
+  "keywords": [
+    "angularjs",
+    "angular",
+    "converter"
+  ],
+  "author": "Team Umami",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/erictsai6/angularjs-to-angular/issues"
+  },
+  "homepage": "https://github.com/erictsai6/angularjs-to-angular#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.1",
+    "glob": "^7.1.2",
+    "handlebars": "^4.0.10",
+    "lodash.sortby": "^4.7.0",
+    "lodash.uniq": "^4.5.0",
+    "lodash.uniqueid": "^4.0.1",
+    "node-glob": "^1.2.0",
+    "prettier": "^1.4.4",
+    "rimraf": "^2.6.1",
+    "typescript": "^2.5.0-dev.20170616",
+    "typescript-formatter": "^5.2.0",
+    "yargs": "^8.0.1"
+  },
+  "devDependencies": {
+    "ava": "^0.19.1",
+    "eslint": "^3.19.0",
+    "js-beautify": "^1.6.14",
+    "rimraf": "^2.6.1"
+  },
+  "bin": "src/index.js"
+}
