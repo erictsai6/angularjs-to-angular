@@ -29,19 +29,27 @@ const pretty = require('../lib/pretty-print');
 const getInputsAndOutputs = require('../lib/components/get-input-and-outputs-from-angular-4-component');
 const getAngularTemplate = require('../angular/get-template');
 
-module.exports = function (files) {
-
+module.exports = function(files) {
     sortBy(files).forEach(file => {
-
         // Read and parse the file's code
         let ast = getSourceFile(file);
 
-        let component = `${imports.get(ast)}${variables.get(ast)}${interfaces.get(ast)}\n${enums.get(ast)}\n${decorator.get(file, ast)}\n${componentClass.get(ast)}`;
+        let component = `${imports.get(ast)}${variables.get(
+            ast
+        )}${interfaces.get(ast)}\n${enums.get(ast)}\n${decorator.get(
+            file,
+            ast
+        )}\n${componentClass.get(ast)}`;
 
         ast = ts.createSourceFile(file, component, ts.ScriptTarget.TS, true);
 
         // Remove $q, $timeout, and $interval from the constructor
-        ast = removeFromConstructor(ast, ['$q', '$timeout', '$interval', '$routeParams']);
+        ast = removeFromConstructor(ast, [
+            '$q',
+            '$timeout',
+            '$interval',
+            '$routeParams',
+        ]);
 
         // Render the ast back to typescript
         component = renderSourceFile(ast);
@@ -50,7 +58,10 @@ module.exports = function (files) {
         component = pretty.printString(component);
 
         // Replace controller static references
-        component = replaceControllerStaticReferences(getSourceFile(file), component);
+        component = replaceControllerStaticReferences(
+            getSourceFile(file),
+            component
+        );
 
         // Do a bunch of string replacements
         component = processStringReplacements(component);
@@ -70,8 +81,15 @@ module.exports = function (files) {
         const specFilePath = getRelatedSpecFilePath(file);
         const specs = specFilePath ? buildSpecs(specFilePath) : undefined;
 
-        const newComponentAst = ts.createSourceFile(file, component, ts.ScriptTarget.TS, true);
-        const newComponentClass = newComponentAst.statements.find(x => x.kind === ts.SyntaxKind.ClassDeclaration);
+        const newComponentAst = ts.createSourceFile(
+            file,
+            component,
+            ts.ScriptTarget.TS,
+            true
+        );
+        const newComponentClass = newComponentAst.statements.find(
+            x => x.kind === ts.SyntaxKind.ClassDeclaration
+        );
         const newComponentClassName = newComponentClass.name.text;
         const mocks = getMocks(newComponentAst);
         const inputsAndOutputs = getInputsAndOutputs(newComponentAst);
@@ -82,20 +100,36 @@ module.exports = function (files) {
             selector: /selector: '(.*)'/.exec(newComponentAst.text)[1],
             testName: newComponentClassName.replace(/([A-Z])/g, ' $1').trim(),
             componentClass: newComponentClassName,
-            componentPath: `./${path.basename(outputFilePath).replace(/\.ts$/, '')}`,
+            componentPath: `./${path
+                .basename(outputFilePath)
+                .replace(/\.ts$/, '')}`,
             specs,
-            methods: lifecycleEvents.concat(methods.public(newComponentClass).map(m => m.name.text)),
+            methods: lifecycleEvents.concat(
+                methods.public(newComponentClass).map(m => m.name.text)
+            ),
             mocks: sortBy(mocks, m => m.name),
             inputs: inputsAndOutputs.filter(x => x.type === 'Input'),
             outputs: inputsAndOutputs.filter(x => x.type === 'Output'),
-            imports: mocks.filter(x => x.import).map(x => x.import).sort(),
+            imports: mocks
+                .filter(x => x.import)
+                .map(x => x.import)
+                .sort(),
             importForms: /"ngModel"/.test(template),
-            providers: mocks.map(x => x.provide).filter(x => !!x).sort(),
-            variables: mocks.map(x => x.variable).filter(x => !!x).sort(),
-            assignments: mocks.map(x => x.assignment).filter(x => !!x).sort(),
+            providers: mocks
+                .map(x => x.provide)
+                .filter(x => !!x)
+                .sort(),
+            variables: mocks
+                .map(x => x.variable)
+                .filter(x => !!x)
+                .sort(),
+            assignments: mocks
+                .map(x => x.assignment)
+                .filter(x => !!x)
+                .sort(),
             testBedGets: mocks.filter(x => x.useReal).map(x => {
                 return `${x.mockName} = TestBed.get(${x.type});`;
-            })
+            }),
         });
 
         // Do a bunch of string replacements
@@ -111,8 +145,17 @@ module.exports = function (files) {
 
         writeFile(outputFilePath.replace('.ts', '.spec.ts'), testFile);
 
-        console.log(`${outputFilePath.replace(process.cwd(), '').replace('.ts', '.spec.ts')}`);
+        console.log(
+            `${outputFilePath
+                .replace(process.cwd(), '')
+                .replace('.ts', '.spec.ts')}`
+        );
     });
 
-    console.log(`Converted ${files.length} components in ${tmpPath.replace(process.cwd() + '/', '')}.\n\n`);
+    console.log(
+        `Converted ${files.length} components in ${tmpPath.replace(
+            process.cwd() + '/',
+            ''
+        )}.\n\n`
+    );
 };

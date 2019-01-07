@@ -19,6 +19,10 @@ const argv = require('yargs') // Reference -> https://github.com/yargs/yargs
         alias: 't',
         describe: 'Processes the templates. Provide a glob in quote.',
     })
+    .option('copy', {
+        alias: 'y',
+        describe: 'Copies over the targeted file. Provide a glob in quotes.',
+    })
     .help('h').argv;
 
 /* Process Components */
@@ -45,7 +49,17 @@ if (argv.serviceSpecs) {
 /* Process Templates */
 if (argv.templates) {
     const globPath = path.join(process.cwd(), argv.templates);
-    processTemplates(globPath);
+    const componentsGlobPath = argv.components
+        ? path.join(process.cwd(), argv.components)
+        : null;
+    processTemplates(globPath, componentsGlobPath);
+    converted = true;
+}
+
+/* Process files that you want to copy */
+if (argv.copy) {
+    const globPath = path.join(process.cwd(), argv.copy);
+    processFiles(globPath);
     converted = true;
 }
 
@@ -75,8 +89,15 @@ function processServiceSpecs(globPath) {
     tool(files);
 }
 
-function processTemplates(globPath) {
+function processTemplates(globPath, componentGlobPath) {
     const tool = require('./tools/process-templates');
+    const files = glob.sync(globPath);
+    const componentFiles = glob.sync(componentGlobPath);
+    tool(files, componentFiles);
+}
+
+function processFiles(globPath) {
+    const tool = require('./tools/process-files');
     const files = glob.sync(globPath);
     tool(files);
 }

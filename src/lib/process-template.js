@@ -1,26 +1,29 @@
 const cheerio = require('cheerio');
 const pretty = require('js-beautify');
+const camelToDash = require('./camel-to-dash');
 
 // Reference for changes in templates https://angular.io/guide/ajs-quick-reference
 
-module.exports = function (template) {
+module.exports = function(template, componentDict) {
     let result = template;
     const $ = cheerio.load(result, {
         normalizeWhitespace: false,
-        decodeEntities: false
+        decodeEntities: false,
     });
 
     /*********************************** Processing template with cheerio *********************************/
 
     // Replace ng-bind
     const mdButton = $('md-button');
-    mdButton.each(function () { // Do not use ()=>
+    mdButton.each(function() {
+        // Do not use ()=>
         $(this).attr('mat-button', 'mat-button');
     });
 
     // Replace ng-bind
     const ngBind = $('[ng-bind]');
-    ngBind.each(function () { // Do not use ()=>
+    ngBind.each(function() {
+        // Do not use ()=>
         const val = $(this).attr('ng-bind');
         $(this).removeAttr('ng-bind');
         $(this).text(`{{${val}}}`);
@@ -29,7 +32,8 @@ module.exports = function (template) {
 
     // Replace ng-show
     const ngShow = $('[ng-show]');
-    ngShow.each(function () { // Do not use ()=>
+    ngShow.each(function() {
+        // Do not use ()=>
         const val = $(this).attr('ng-show');
         $(this).removeAttr('ng-show');
         $(this).attr('[hidden]', `!${val}`);
@@ -39,7 +43,7 @@ module.exports = function (template) {
     // solution is to move ngIf to a wrapper like ng-container, and not introduce new html elements.
     // https://angular.io/guide/structural-directives#group-sibling-elements-with-ng-container
     const ngIfngRepeats = $('[ng-if][ng-repeat]');
-    ngIfngRepeats.each(function () {
+    ngIfngRepeats.each(function() {
         const $el = $(this);
         const ifVal = $el.attr('ng-if');
 
@@ -49,17 +53,42 @@ module.exports = function (template) {
 
     // Remove ng-model-options
     const ngModelOptions = $('[ng-model-options]');
-    ngModelOptions.each(function () {
+    ngModelOptions.each(function() {
         $(this).removeAttr('ng-model-options');
     });
 
     const allInputs = $('input, select');
     allInputs.each(function() {
         const name = $(this).attr('name');
-        if(name) {
+        if (name) {
             $(this).attr(`#${name}`, 'ngModel');
         }
     });
+
+    for (let componentKey in componentDict) {
+        const components = $(componentKey);
+        components.each(function() {
+            const componentBindings = componentDict[componentKey];
+            for (let newInputBinding of componentBindings.input) {
+                const oldInputBinding = camelToDash(newInputBinding);
+                const attrValue = $(this).attr(oldInputBinding);
+                $(this).removeAttr(oldInputBinding);
+                $(this).attr(`[${newInputBinding}]`, attrValue);
+            }
+            for (let newOutputBinding of componentBindings.output) {
+                const oldOutputBinding = camelToDash(newOutputBinding);
+                const attrValue = $(this).attr(oldOutputBinding);
+                $(this).removeAttr(oldOutputBinding);
+                $(this).attr(`(${newOutputBinding})`, attrValue);
+            }
+            for (let newBinding of componentBindings['two-way']) {
+                const oldBinding = camelToDash(newBinding);
+                const attrValue = $(this).attr(oldBinding);
+                $(this).removeAttr(oldBinding);
+                $(this).attr(`[(${newBinding})]`, attrValue);
+            }
+        });
+    }
 
     result = $('body').html();
 
@@ -118,9 +147,15 @@ module.exports = function (template) {
     // Replace ng-href with [href]
     result = result.replace(/([^\w])ng-href([^\w])/g, '$1[href]$2');
     result = result.replace(/\[href\]="((\w|\/)+)"/g, 'href="$1"');
-    result = result.replace(/\[href\]="(.+){{(.*)}}(.*)"/g, '[href]="`$1${$2}$3`"');
+    result = result.replace(
+        /\[href\]="(.+){{(.*)}}(.*)"/g,
+        '[href]="`$1${$2}$3`"'
+    );
     result = result.replace(/\[href\]="{{(.*)}}"/g, '[href]="$1"');
-    result = result.replace(/\[href\]="`(.*)\${(.*)}(.*)`"/g, '[href]="\'$1\' + $2 + \'$3\'"');
+    result = result.replace(
+        /\[href\]="`(.*)\${(.*)}(.*)`"/g,
+        "[href]=\"'$1' + $2 + '$3'\""
+    );
     result = result.replace(/\[href\]="(.*) \+ ''"/g, '[href]="$1"');
 
     // Replace ng-class with [ngClass]
@@ -159,7 +194,10 @@ module.exports = function (template) {
     result = result.replace(/(ng-| )pattern="(.*)"/g, '[pattern]="$2"');
 
     // Replace ng-repeat="x in ..." with *ngFor="let x of"
-    result = result.replace(/([^\w])ng-repeat="(\w+)\sin\s([^"]*)"/g, '$1*ngFor="let $2 of $3"');
+    result = result.replace(
+        /([^\w])ng-repeat="(\w+)\sin\s([^"]*)"/g,
+        '$1*ngFor="let $2 of $3"'
+    );
 
     // Replace track by with ; trackBy
     result = result.replace(/track by/g, ';trackBy:');
@@ -168,10 +206,16 @@ module.exports = function (template) {
     result = result.replace(/limitTo\s?:\s?([^"]*)/g, 'slice:0:$1');
 
     // Replace ng-switch-when with *ngSwitchCase
-    result = result.replace(/([^\w])ng-switch-when([^\w])/g, '$1*ngSwitchCase$2');
+    result = result.replace(
+        /([^\w])ng-switch-when([^\w])/g,
+        '$1*ngSwitchCase$2'
+    );
 
     // Replace ng-switch-default with *ngSwitchDefault
-    result = result.replace(/([^\w])ng-switch-default([^\w])/g, '$1*ngSwitchDefault$2');
+    result = result.replace(
+        /([^\w])ng-switch-default([^\w])/g,
+        '$1*ngSwitchDefault$2'
+    );
 
     // Replace ng-switch with [ngSwitch]
     result = result.replace(/([^\w])ng-switch([^\w])/g, '$1[ngSwitch]$2');
